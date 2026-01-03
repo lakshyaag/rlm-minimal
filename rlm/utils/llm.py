@@ -9,22 +9,31 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class OpenAIClient:
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-5"):
+    def __init__(
+        self,
+        base_url: str = "https://api.openai.com/v1",
+        api_key: Optional[str] = None,
+        model: str = "gpt-5",
+    ):
+        self.base_url = base_url
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
-            raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass api_key parameter.")
-        
+            raise ValueError(
+                "OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass api_key parameter."
+            )
+
         self.model = model
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
 
         # Implement cost tracking logic here.
-    
+
     def completion(
         self,
         messages: list[dict[str, str]] | str,
         max_tokens: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         try:
             if isinstance(messages, str):
@@ -36,7 +45,7 @@ class OpenAIClient:
                 model=self.model,
                 messages=messages,
                 max_completion_tokens=max_tokens,
-                **kwargs
+                **kwargs,
             )
             return response.choices[0].message.content
 
