@@ -61,7 +61,7 @@ def query():
                 try:
                     # Initialize RLM
                     rlm = RLM_WEB(
-                        base_url="https://api.pinference.ai/api/v1",
+                        base_url=os.getenv("OPENAI_BASE_URL"),
                         api_key=os.getenv("OPENAI_API_KEY"),
                         model=model,
                         recursive_model=recursive_model,
