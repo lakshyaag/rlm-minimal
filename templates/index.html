@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLM Playground</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-tertiary: #1e1e1e;
+            --accent-primary: #00ff88;
+            --accent-secondary: #ff6b35;
+            --accent-tertiary: #4dabf7;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666;
+            --border-color: #2a2a2a;
+            --border-accent: #00ff88;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 0;
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background mesh */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 107, 53, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(77, 171, 247, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 3px solid var(--accent-primary);
+            padding: 40px 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%);
+            opacity: 0.1;
+            filter: blur(60px);
+        }
+
+        .header h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-section, .output-section {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            padding: 30px;
+            position: relative;
+        }
+
+        .input-section {
+            border-left: 4px solid var(--accent-tertiary);
+        }
+
+        .output-section {
+            border-left: 4px solid var(--accent-secondary);
+        }
+
+        .section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: var(--accent-primary);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 0;
+            font-size: 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+            background: var(--bg-secondary);
+        }
+
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .config-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .config-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            border: none;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            border: 2px solid var(--accent-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            transition: left 0.3s ease;
+        }
+
+        .btn:hover::before {
+            left: 0;
+        }
+
+        .btn:hover {
+            color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .events-container {
+            max-height: 700px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding-right: 10px;
+        }
+
+        .events-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .events-container::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        .events-container::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .step-group {
+            margin-bottom: 24px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-tertiary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-group::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-secondary);
+            transition: height 0.3s ease;
+        }
+
+        .step-header {
+            background: var(--bg-secondary);
+            padding: 18px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            user-select: none;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+        }
+
+        .step-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .step-header .step-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--accent-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .step-header .step-toggle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .step-header.collapsed .step-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .step-content {
+            max-height: 5000px;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .step-content.collapsed {
+            max-height: 0;
+        }
+
+        .step-events {
+            padding: 20px;
+        }
+
+        .event {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-tertiary);
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .event.query-start {
+            border-left-color: var(--accent-primary);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .event.model-response {
+            border-left-color: var(--accent-tertiary);
+        }
+
+        .event.code-execution {
+            border-left-color: var(--accent-secondary);
+        }
+
+        .event.final-answer {
+            border-left-color: var(--accent-primary);
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid var(--accent-primary);
+        }
+
+        .event.error {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .event-type {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+        }
+
+        .event-timestamp {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .event-content {
+            margin-top: 12px;
+            color: var(--text-primary);
+        }
+
+        .code-block {
+            background: #000;
+            color: var(--accent-primary);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: '>';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--accent-secondary);
+            font-weight: 700;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            padding-left: 20px;
+        }
+
+        .output-block {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: var(--text-secondary);
+        }
+
+        .final-answer-box {
+            background: rgba(0, 255, 136, 0.1);
+            border: 3px solid var(--accent-primary);
+            padding: 24px;
+            margin-top: 24px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative;
+        }
+
+        .final-answer-box::before {
+            content: '✓';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+            color: var(--accent-primary);
+            opacity: 0.3;
+        }
+
+        .error-box {
+            background: rgba(255, 68, 68, 0.1);
+            border: 2px solid #ff4444;
+            padding: 20px;
+            margin-top: 24px;
+            color: #ff4444;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin: 0;
+        }
+
+        .stat {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RLM Interactive Interface</h1>
+            <p>Playground for basic RLM implementation</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <h2 class="section-title">Input</h2>
+
+                <form id="queryForm">
+                    <div class="form-group">
+                        <label for="context">Context</label>
+                        <textarea id="context" name="context" placeholder="Enter your context here..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="query">Query</label>
+                        <input type="text" id="query" name="query" placeholder="Enter your query here...">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="config-group">
+                            <div>
+                                <label for="model">Root LM</label>
+                                <select id="model" name="model">
+                                    <option value="openai/gpt-5-mini">gpt-5-mini</option>
+                                    <option value="openai/gpt-5-nano">gpt-5-nano</option>
+                                    <option value="openai/gpt-4.1-mini">gpt-4.1-mini</option>
+                                    <option value="openai/gpt-4.1-nano">gpt-4.1-nano</option>
+                                    <option value="anthropic/claude-haiku-4.5">claude-haiku-4.5</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="recursive_model">Recursive LM</label>
+                                <select id="recursive_model" name="recursive_model">
+                                    <option value="openai/gpt-5-mini">gpt-5-mini</option>
+                                    <option value="openai/gpt-5-nano">gpt-5-nano</option>
+                                    <option value="openai/gpt-4.1-mini">gpt-4.1-mini</option>
+                                    <option value="openai/gpt-4.1-nano">gpt-4.1-nano</option>
+                                    <option value="anthropic/claude-haiku-4.5">claude-haiku-4.5</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="max_iterations">Max Iterations</label>
+                        <input type="number" id="max_iterations" name="max_iterations" value="10" min="1" max="50">
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">
+                        <span>Run Query</span>
+                    </button>
+                </form>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 10px; color: var(--text-secondary);">Processing... This may take a while.</p>
+                </div>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">
+                    Results
+                    <div id="stats" style="display: none;"></div>
+                </h2>
+
+                <div id="finalAnswer" style="display: none;"></div>
+
+                <div id="errorBox" style="display: none;"></div>
+
+                <div class="events-container" id="eventsContainer">
+                    <p style="color: var(--text-muted); text-align: center; padding: 40px; font-family: 'JetBrains Mono', monospace;">
+                        Submit a query to see the RLM process in action...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('queryForm');
+        const loading = document.getElementById('loading');
+        const eventsContainer = document.getElementById('eventsContainer');
+        const finalAnswer = document.getElementById('finalAnswer');
+        const errorBox = document.getElementById('errorBox');
+        const stats = document.getElementById('stats');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const eventsByStep = new Map();
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            eventsContainer.innerHTML = '';
+            finalAnswer.style.display = 'none';
+            errorBox.style.display = 'none';
+            stats.style.display = 'none';
+            eventsByStep.clear();
+
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+
+            const formData = {
+                context: document.getElementById('context').value,
+                query: document.getElementById('query').value,
+                model: document.getElementById('model').value,
+                recursive_model: document.getElementById('recursive_model').value,
+                max_iterations: parseInt(document.getElementById('max_iterations').value)
+            };
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+
+                                if (data.type === 'complete') {
+                                    finalAnswer.innerHTML = `
+                                        <div class="final-answer-box">
+                                            <strong>Final Answer:</strong><br>
+                                            ${escapeHtml(data.answer)}
+                                        </div>
+                                    `;
+                                    finalAnswer.style.display = 'block';
+
+                                    let totalEvents = 0;
+                                    let codeExecutions = 0;
+                                    let modelResponses = 0;
+                                    eventsByStep.forEach(events => {
+                                        totalEvents += events.length;
+                                        events.forEach(e => {
+                                            if (e.type === 'code_execution') codeExecutions++;
+                                            if (e.type === 'model_response') modelResponses++;
+                                        });
+                                    });
+
+                                    stats.innerHTML = `
+                                        <div class="stat">
+                                            <span class="stat-value">${modelResponses}</span>
+                                            <span class="stat-label">Iter</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="stat-value">${codeExecutions}</span>
+                                            <span class="stat-label">Code</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="stat-value">${totalEvents}</span>
+                                            <span class="stat-label">Events</span>
+                                        </div>
+                                    `;
+                                    stats.style.display = 'flex';
+
+                                    loading.style.display = 'none';
+                                    submitBtn.disabled = false;
+                                } else if (data.type === 'error') {
+                                    errorBox.innerHTML = `
+                                        <div class="error-box">
+                                            <strong>Error:</strong> ${escapeHtml(data.error)}
+                                        </div>
+                                    `;
+                                    errorBox.style.display = 'block';
+                                    loading.style.display = 'none';
+                                    submitBtn.disabled = false;
+                                } else {
+                                    addEvent(data);
+                                }
+                            } catch (e) {
+                                console.error('Error parsing SSE data:', e);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                errorBox.innerHTML = `
+                    <div class="error-box">
+                        <strong>Error:</strong> ${escapeHtml(error.message)}
+                    </div>
+                `;
+                errorBox.style.display = 'block';
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        function addEvent(event) {
+            const stepNum = event.step || 0;
+
+            if (!eventsByStep.has(stepNum)) {
+                eventsByStep.set(stepNum, []);
+                createStepGroup(stepNum);
+            }
+
+            eventsByStep.get(stepNum).push(event);
+            renderEvent(stepNum, event);
+            eventsContainer.scrollTop = eventsContainer.scrollHeight;
+        }
+
+        function createStepGroup(stepNum) {
+            const stepGroup = document.createElement('div');
+            stepGroup.className = 'step-group';
+            stepGroup.id = `step-${stepNum}`;
+
+            const stepHeader = document.createElement('div');
+            stepHeader.className = 'step-header';
+            stepHeader.onclick = () => toggleStep(stepNum);
+
+            const stepContent = document.createElement('div');
+            stepContent.className = 'step-content';
+            stepContent.id = `step-content-${stepNum}`;
+
+            const stepEvents = document.createElement('div');
+            stepEvents.className = 'step-events';
+            stepEvents.id = `step-events-${stepNum}`;
+
+            stepHeader.innerHTML = `
+                <span class="step-number">Step ${stepNum === 0 ? 'Start' : stepNum}</span>
+                <span class="step-toggle">▼</span>
+            `;
+
+            stepContent.appendChild(stepEvents);
+            stepGroup.appendChild(stepHeader);
+            stepGroup.appendChild(stepContent);
+
+            eventsContainer.appendChild(stepGroup);
+        }
+
+        function toggleStep(stepNum) {
+            const stepGroup = document.getElementById(`step-${stepNum}`);
+            const header = stepGroup.querySelector('.step-header');
+            const content = document.getElementById(`step-content-${stepNum}`);
+
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                header.classList.add('collapsed');
+            }
+        }
+
+        function renderEvent(stepNum, event) {
+            const stepEvents = document.getElementById(`step-events-${stepNum}`);
+            if (!stepEvents) return;
+
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event ${event.type.replace('_', '-')}`;
+
+            let content = '';
+
+            switch(event.type) {
+                case 'query_start':
+                    content = `<strong>Query:</strong> ${escapeHtml(event.data.query)}`;
+                    break;
+                case 'model_response':
+                    content = `
+                        <div><strong>Response:</strong></div>
+                        <div class="output-block">${escapeHtml(event.data.response)}</div>
+                        ${event.data.has_tool_calls ? '<div style="color: var(--accent-secondary); margin-top: 8px; font-family: \'JetBrains Mono\', monospace;">🔧 Contains code to execute</div>' : ''}
+                    `;
+                    break;
+                case 'code_execution':
+                    content = `
+                        <div><strong>Code Executed:</strong></div>
+                        <div class="code-block"><pre>${escapeHtml(event.data.code)}</pre></div>
+                        ${event.data.stdout ? `
+                            <div><strong>Output:</strong></div>
+                            <div class="output-block">${escapeHtml(event.data.stdout)}</div>
+                        ` : ''}
+                        ${event.data.stderr ? `
+                            <div style="color: #ff4444;"><strong>Error:</strong></div>
+                            <div class="output-block" style="background: rgba(255, 68, 68, 0.1); border-color: #ff4444;">${escapeHtml(event.data.stderr)}</div>
+                        ` : ''}
+                        ${event.data.execution_time ? `<div style="color: var(--text-muted); margin-top: 8px; font-family: 'JetBrains Mono', monospace;">⏱️ Execution time: ${event.data.execution_time.toFixed(4)}s</div>` : ''}
+                    `;
+                    break;
+                case 'final_answer':
+                    content = `<strong>Answer:</strong> ${escapeHtml(event.data.answer)}`;
+                    break;
+                case 'error':
+                    content = `<strong>Error:</strong> ${escapeHtml(event.data.error)}`;
+                    break;
+            }
+
+            eventDiv.innerHTML = `
+                <div class="event-header">
+                    <span class="event-type">${event.type.replace('_', ' ')}</span>
+                </div>
+                <div class="event-timestamp">${new Date(event.timestamp).toLocaleTimeString()}</div>
+                <div class="event-content">${content}</div>
+            `;
+
+            stepEvents.appendChild(eventDiv);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
